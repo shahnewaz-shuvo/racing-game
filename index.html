@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Browser Racing Game</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="game-shell">
+      <header>
+        <h1>Neon Sprint</h1>
+        <p>Avoid traffic, survive as long as you can, and chase a high score.</p>
+      </header>
+
+      <section class="hud" aria-live="polite">
+        <div>Speed: <strong id="speed">0</strong></div>
+        <div>Score: <strong id="score">0</strong></div>
+        <div>Best: <strong id="best">0</strong></div>
+      </section>
+
+      <canvas id="game" width="420" height="720" aria-label="Racing game canvas"></canvas>
+
+      <section class="controls">
+        <p><kbd>←</kbd> / <kbd>→</kbd> steer · <kbd>↑</kbd> speed up · <kbd>↓</kbd> slow down</p>
+        <button id="restart" type="button">Restart Race</button>
+      </section>
+    </main>
+
+    <script src="game.js"></script>
+  </body>
+</html>
