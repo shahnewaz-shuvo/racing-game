@@ -1,0 +1,129 @@
+:root {
+  color-scheme: dark;
+  --bg: #050810;
+  --panel: #111930;
+  --road: #191d2c;
+  --line: #f8f9ff;
+  --accent: #00ecff;
+  --danger: #ff4d6d;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 20% 0%, #47247966 0%, transparent 45%),
+    radial-gradient(circle at 80% 0%, #0583f066 0%, transparent 40%),
+    radial-gradient(circle at center, #112146 0%, var(--bg) 65%);
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  color: #eef3ff;
+}
+
+.game-shell {
+  width: min(95vw, 620px);
+  padding: 1rem;
+  border-radius: 1rem;
+  background: linear-gradient(180deg, #141f36 0%, var(--panel) 100%);
+  box-shadow: 0 20px 70px rgb(0 0 0 / 45%), 0 0 30px #00ecff22;
+  border: 1px solid #3e5b98;
+}
+
+h1 {
+  margin: 0;
+  letter-spacing: 0.05em;
+  color: #67f0ff;
+  text-shadow: 0 0 10px #00ecff80;
+}
+
+header p {
+  margin-top: 0.4rem;
+  opacity: 0.9;
+}
+
+.menu {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+}
+
+.menu label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.83rem;
+  gap: 0.3rem;
+}
+
+select,
+button {
+  font: inherit;
+  border: 1px solid #3d5e9d;
+  border-radius: 0.55rem;
+  padding: 0.45rem 0.6rem;
+}
+
+select {
+  background: #111d34;
+  color: #eff4ff;
+}
+
+button {
+  background: linear-gradient(90deg, #00ecff, #9d7bff);
+  color: #05101a;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.hud {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.4rem;
+  font-size: 0.95rem;
+  margin: 0.75rem 0;
+}
+
+.hud > div {
+  background: #0f1a30;
+  border: 1px solid #2d4675;
+  border-radius: 0.45rem;
+  padding: 0.3rem 0.4rem;
+  text-align: center;
+}
+
+canvas {
+  width: 100%;
+  max-height: 72vh;
+  border: 2px solid #2b3f68;
+  border-radius: 0.75rem;
+  background: var(--road);
+  box-shadow: inset 0 0 24px #00000055;
+}
+
+.controls {
+  margin-top: 0.8rem;
+  text-align: center;
+}
+
+kbd {
+  background: #1e2b49;
+  border: 1px solid #486bb0;
+  border-bottom-width: 3px;
+  border-radius: 0.35rem;
+  padding: 0.1rem 0.4rem;
+}
+
+@media (max-width: 760px) {
+  .menu {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .hud {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}

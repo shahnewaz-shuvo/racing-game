@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Browser Racing Game</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="game-shell">
+      <header>
+        <h1>Neon Sprint X</h1>
+        <p>Pick a car + mode, dodge traffic, collect bonuses, and blast what you can.</p>
+      </header>
+
+      <section class="menu" aria-label="Game options">
+        <label>
+          Car
+          <select id="carSelect">
+            <option value="porsche">Porsche</option>
+            <option value="bmw">BMW</option>
+            <option value="mazda">Mazda</option>
+          </select>
+        </label>
+
+        <label>
+          Mode
+          <select id="modeSelect">
+            <option value="classic">Classic</option>
+            <option value="timeattack">Time Attack</option>
+            <option value="elimination">Elimination</option>
+          </select>
+        </label>
+
+        <label>
+          Difficulty
+          <select id="difficultySelect">
+            <option value="easy">Easy</option>
+            <option value="normal" selected>Normal</option>
+            <option value="hard">Hard</option>
+          </select>
+        </label>
+
+        <button id="start" type="button">Start Race</button>
+      </section>
+
+      <section class="hud" aria-live="polite">
+        <div>Speed: <strong id="speed">0</strong></div>
+        <div>Score: <strong id="score">0</strong></div>
+        <div>Best: <strong id="best">0</strong></div>
+        <div>Ammo: <strong id="ammo">0</strong></div>
+        <div>Mode: <strong id="modeLabel">-</strong></div>
+      </section>
+
+      <canvas id="game" width="420" height="720" aria-label="Racing game canvas"></canvas>
+
+      <section class="controls">
+        <p><kbd>←/A</kbd> <kbd>→/D</kbd> steer · <kbd>↑/W</kbd> speed up · <kbd>↓/S</kbd> slow down</p>
+        <p><kbd>Space</kbd> shoot (limited ammo; armored cars cannot be destroyed)</p>
+        <button id="restart" type="button">Restart Race</button>
+      </section>
+    </main>
+
+    <script src="game.js"></script>
+  </body>
+</html>

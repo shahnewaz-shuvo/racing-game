@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Browser Racing Game</title>
+    <style>
+:root {
+  color-scheme: dark;
+  --bg: #050810;
+  --panel: #111930;
+  --road: #191d2c;
+  --line: #f8f9ff;
+  --accent: #00ecff;
+  --danger: #ff4d6d;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 20% 0%, #47247966 0%, transparent 45%),
+    radial-gradient(circle at 80% 0%, #0583f066 0%, transparent 40%),
+    radial-gradient(circle at center, #112146 0%, var(--bg) 65%);
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  color: #eef3ff;
+}
+
+.game-shell {
+  width: min(95vw, 620px);
+  padding: 1rem;
+  border-radius: 1rem;
+  background: linear-gradient(180deg, #141f36 0%, var(--panel) 100%);
+  box-shadow: 0 20px 70px rgb(0 0 0 / 45%), 0 0 30px #00ecff22;
+  border: 1px solid #3e5b98;
+}
+
+h1 {
+  margin: 0;
+  letter-spacing: 0.05em;
+  color: #67f0ff;
+  text-shadow: 0 0 10px #00ecff80;
+}
+
+header p {
+  margin-top: 0.4rem;
+  opacity: 0.9;
+}
+
+.menu {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+}
+
+.menu label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.83rem;
+  gap: 0.3rem;
+}
+
+select,
+button {
+  font: inherit;
+  border: 1px solid #3d5e9d;
+  border-radius: 0.55rem;
+  padding: 0.45rem 0.6rem;
+}
+
+select {
+  background: #111d34;
+  color: #eff4ff;
+}
+
+button {
+  background: linear-gradient(90deg, #00ecff, #9d7bff);
+  color: #05101a;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.hud {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.4rem;
+  font-size: 0.95rem;
+  margin: 0.75rem 0;
+}
+
+.hud > div {
+  background: #0f1a30;
+  border: 1px solid #2d4675;
+  border-radius: 0.45rem;
+  padding: 0.3rem 0.4rem;
+  text-align: center;
+}
+
+canvas {
+  width: 100%;
+  max-height: 72vh;
+  border: 2px solid #2b3f68;
+  border-radius: 0.75rem;
+  background: var(--road);
+  box-shadow: inset 0 0 24px #00000055;
+}
+
+.controls {
+  margin-top: 0.8rem;
+  text-align: center;
+}
+
+kbd {
+  background: #1e2b49;
+  border: 1px solid #486bb0;
+  border-bottom-width: 3px;
+  border-radius: 0.35rem;
+  padding: 0.1rem 0.4rem;
+}
+
+@media (max-width: 760px) {
+  .menu {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .hud {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+</style>
+  </head>
+  <body>
+    <main class="game-shell">
+      <header>
+        <h1>Neon Sprint X</h1>
+        <p>Pick a car + mode, dodge traffic, collect bonuses, and blast what you can.</p>
+      </header>
+
+      <section class="menu" aria-label="Game options">
+        <label>
+          Car
+          <select id="carSelect">
+            <option value="porsche">Porsche</option>
+            <option value="bmw">BMW</option>
+            <option value="mazda">Mazda</option>
+          </select>
+        </label>
+
+        <label>
+          Mode
+          <select id="modeSelect">
+            <option value="classic">Classic</option>
+            <option value="timeattack">Time Attack</option>
+            <option value="elimination">Elimination</option>
+          </select>
+        </label>
+
+        <label>
+          Difficulty
+          <select id="difficultySelect">
+            <option value="easy">Easy</option>
+            <option value="normal" selected>Normal</option>
+            <option value="hard">Hard</option>
+          </select>
+        </label>
+
+        <button id="start" type="button">Start Race</button>
+      </section>
+
+      <section class="hud" aria-live="polite">
+        <div>Speed: <strong id="speed">0</strong></div>
+        <div>Score: <strong id="score">0</strong></div>
+        <div>Best: <strong id="best">0</strong></div>
+        <div>Ammo: <strong id="ammo">0</strong></div>
+        <div>Mode: <strong id="modeLabel">-</strong></div>
+      </section>
+
+      <canvas id="game" width="420" height="720" aria-label="Racing game canvas"></canvas>
+
+      <section class="controls">
+        <p><kbd>←/A</kbd> <kbd>→/D</kbd> steer · <kbd>↑/W</kbd> speed up · <kbd>↓/S</kbd> slow down</p>
+        <p><kbd>Space</kbd> shoot (limited ammo; armored cars cannot be destroyed)</p>
+        <button id="restart" type="button">Restart Race</button>
+      </section>
+    </main>
+
+    <script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const speedEl = document.getElementById("speed");
+const scoreEl = document.getElementById("score");
+const bestEl = document.getElementById("best");
+const ammoEl = document.getElementById("ammo");
+const modeLabelEl = document.getElementById("modeLabel");
+
+const carSelectEl = document.getElementById("carSelect");
+const modeSelectEl = document.getElementById("modeSelect");
+const difficultySelectEl = document.getElementById("difficultySelect");
+
+const restartBtn = document.getElementById("restart");
+const startBtn = document.getElementById("start");
+
+const ROAD_WIDTH = canvas.width;
+const LANE_COUNT = 3;
+const LANE_WIDTH = ROAD_WIDTH / LANE_COUNT;
+
+const carThemes = {
+  porsche: { color: "#00ecff", accent: "#031822" },
+  bmw: { color: "#58a6ff", accent: "#05152d" },
+  mazda: { color: "#ff7f50", accent: "#2a0900" },
+};
+
+const modeConfig = {
+  classic: { label: "Classic", bonusMultiplier: 1, timed: false, survivalPenalty: false },
+  timeattack: { label: "Time Attack", bonusMultiplier: 1.5, timed: true, survivalPenalty: false },
+  elimination: { label: "Elimination", bonusMultiplier: 1.2, timed: false, survivalPenalty: true },
+};
+
+const difficultyConfig = {
+  easy: { spawnFactor: 1.25, speedFactor: 0.88, armoredChance: 0.15 },
+  normal: { spawnFactor: 1, speedFactor: 1, armoredChance: 0.3 },
+  hard: { spawnFactor: 0.78, speedFactor: 1.22, armoredChance: 0.45 },
+};
+
+const keys = {
+  ArrowLeft: false,
+  ArrowRight: false,
+  ArrowUp: false,
+  ArrowDown: false,
+  KeyA: false,
+  KeyD: false,
+  KeyW: false,
+  KeyS: false,
+};
+
+const state = {
+  player: { x: ROAD_WIDTH / 2 - 24, y: canvas.height - 130, width: 48, height: 92, carType: "porsche" },
+  traffic: [],
+  bullets: [],
+  bonuses: [],
+  roadOffset: 0,
+  lightOffset: 0,
+  speed: 6,
+  maxSpeed: 15,
+  minSpeed: 3,
+  score: 0,
+  best: Number(localStorage.getItem("neonSprintBest") || 0),
+  gameOver: false,
+  spawnTimer: 0,
+  bonusTimer: 0,
+  ammo: 8,
+  mode: "classic",
+  difficulty: "normal",
+  timeLeft: 60,
+};
+
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function beep(freq, duration, type = "square", volume = 0.04) {
+  if (audioCtx.state === "suspended") audioCtx.resume();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.value = freq;
+  gain.gain.value = volume;
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + duration);
+}
+
+function laneCenterX(lane) {
+  return lane * LANE_WIDTH + LANE_WIDTH / 2;
+}
+
+function spawnTraffic() {
+  const lane = Math.floor(Math.random() * LANE_COUNT);
+  const width = 44;
+  const height = 84;
+  const diff = difficultyConfig[state.difficulty];
+  const armored = Math.random() < diff.armoredChance;
+
+  state.traffic.push({
+    x: laneCenterX(lane) - width / 2,
+    y: -height - 30,
+    width,
+    height,
+    speed: state.speed * (0.8 + Math.random() * 0.45) * diff.speedFactor,
+    color: armored ? "#6d7283" : `hsl(${Math.random() * 360} 85% 58%)`,
+    armored,
+  });
+}
+
+function spawnBonus() {
+  const lane = Math.floor(Math.random() * LANE_COUNT);
+  state.bonuses.push({
+    x: laneCenterX(lane),
+    y: -20,
+    radius: 12,
+    type: Math.random() < 0.65 ? "score" : "ammo",
+  });
+}
+
+function drawTrafficLights() {
+  const spacing = 120;
+  state.lightOffset += state.speed * 0.7;
+  if (state.lightOffset > spacing) state.lightOffset = 0;
+
+  for (let y = -spacing; y < canvas.height + spacing; y += spacing) {
+    const yPos = y + state.lightOffset;
+    ctx.fillStyle = "#272f45";
+    ctx.fillRect(10, yPos, 16, 42);
+    ctx.fillRect(canvas.width - 26, yPos, 16, 42);
+
+    ctx.fillStyle = "#ff2a6d";
+    ctx.beginPath();
+    ctx.arc(18, yPos + 11, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#ffe36a";
+    ctx.beginPath();
+    ctx.arc(18, yPos + 21, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#5cff85";
+    ctx.beginPath();
+    ctx.arc(18, yPos + 31, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#ff2a6d";
+    ctx.beginPath();
+    ctx.arc(canvas.width - 18, yPos + 11, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#ffe36a";
+    ctx.beginPath();
+    ctx.arc(canvas.width - 18, yPos + 21, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#5cff85";
+    ctx.beginPath();
+    ctx.arc(canvas.width - 18, yPos + 31, 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawRoad() {
+  ctx.fillStyle = "#151a25";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  drawTrafficLights();
+
+  ctx.fillStyle = "#2c364d";
+  ctx.fillRect(0, 0, 6, canvas.height);
+  ctx.fillRect(canvas.width - 6, 0, 6, canvas.height);
+
+  ctx.fillStyle = "#f5f6fa";
+  const dashHeight = 38;
+  const gap = 28;
+  for (let lane = 1; lane < LANE_COUNT; lane++) {
+    const x = lane * LANE_WIDTH - 4;
+    for (let y = -dashHeight; y < canvas.height + dashHeight; y += dashHeight + gap) {
+      ctx.fillRect(x, y + state.roadOffset, 8, dashHeight);
+    }
+  }
+}
+
+function drawCar(car, color = "#00ecff", accent = "#09121c") {
+  ctx.fillStyle = color;
+  ctx.fillRect(car.x, car.y, car.width, car.height);
+
+  ctx.fillStyle = accent;
+  ctx.fillRect(car.x + 8, car.y + 12, car.width - 16, 18);
+  ctx.fillRect(car.x + 8, car.y + car.height - 30, car.width - 16, 14);
+
+  ctx.fillStyle = "#e8f4ff";
+  ctx.fillRect(car.x + 5, car.y + 4, 10, 8);
+  ctx.fillRect(car.x + car.width - 15, car.y + 4, 10, 8);
+  ctx.fillRect(car.x + 5, car.y + car.height - 12, 10, 8);
+  ctx.fillRect(car.x + car.width - 15, car.y + car.height - 12, 10, 8);
+}
+
+function checkCollision(a, b) {
+  return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+}
+
+function shoot() {
+  if (state.gameOver || state.ammo <= 0) return;
+  state.ammo -= 1;
+  state.bullets.push({ x: state.player.x + state.player.width / 2 - 3, y: state.player.y - 10, width: 6, height: 16, speed: 14 });
+  beep(600, 0.06, "sawtooth", 0.05);
+}
+
+function update() {
+  if (state.gameOver) return;
+
+  if (keys.ArrowLeft || keys.KeyA) state.player.x -= 7;
+  if (keys.ArrowRight || keys.KeyD) state.player.x += 7;
+  if (keys.ArrowUp || keys.KeyW) state.speed = Math.min(state.maxSpeed, state.speed + 0.08);
+  if (keys.ArrowDown || keys.KeyS) state.speed = Math.max(state.minSpeed, state.speed - 0.12);
+
+  state.player.x = Math.max(8, Math.min(canvas.width - state.player.width - 8, state.player.x));
+
+  state.roadOffset += state.speed;
+  if (state.roadOffset > 66) state.roadOffset = 0;
+
+  state.spawnTimer += 1;
+  const diff = difficultyConfig[state.difficulty];
+  const spawnInterval = Math.max(20, (90 - state.speed * 4) * diff.spawnFactor);
+  if (state.spawnTimer >= spawnInterval) {
+    spawnTraffic();
+    state.spawnTimer = 0;
+  }
+
+  state.bonusTimer += 1;
+  if (state.bonusTimer >= 170) {
+    spawnBonus();
+    state.bonusTimer = 0;
+  }
+
+  for (const bullet of state.bullets) bullet.y -= bullet.speed;
+  state.bullets = state.bullets.filter((b) => b.y > -40);
+
+  for (const car of state.traffic) {
+    car.y += car.speed + state.speed * 0.35;
+    if (checkCollision(state.player, car)) {
+      state.gameOver = true;
+      beep(160, 0.2, "square", 0.08);
+    }
+  }
+
+  for (const bonus of state.bonuses) {
+    bonus.y += state.speed + 3;
+    const playerCenterX = state.player.x + state.player.width / 2;
+    const playerCenterY = state.player.y + state.player.height / 2;
+    const dx = playerCenterX - bonus.x;
+    const dy = playerCenterY - bonus.y;
+    if (dx * dx + dy * dy < (bonus.radius + 26) * (bonus.radius + 26)) {
+      const mult = modeConfig[state.mode].bonusMultiplier;
+      if (bonus.type === "score") {
+        state.score += 120 * mult;
+      } else {
+        state.ammo = Math.min(14, state.ammo + 2);
+      }
+      bonus.y = canvas.height + 100;
+      beep(900, 0.08, "triangle", 0.045);
+    }
+  }
+
+  for (const bullet of state.bullets) {
+    for (const car of state.traffic) {
+      if (checkCollision(bullet, car)) {
+        bullet.y = -50;
+        if (!car.armored) {
+          car.y = canvas.height + 200;
+          state.score += 80;
+          beep(440, 0.06, "square", 0.05);
+        } else {
+          beep(210, 0.05, "square", 0.04);
+        }
+      }
+    }
+  }
+
+  state.traffic = state.traffic.filter((car) => car.y < canvas.height + 120);
+  state.bonuses = state.bonuses.filter((bonus) => bonus.y < canvas.height + 40);
+
+  state.score += state.speed * 0.12;
+
+  if (modeConfig[state.mode].timed) {
+    state.timeLeft = Math.max(0, state.timeLeft - 1 / 60);
+    if (state.timeLeft <= 0) state.gameOver = true;
+  }
+
+  if (modeConfig[state.mode].survivalPenalty && state.speed < 5.5) {
+    state.score = Math.max(0, state.score - 0.22);
+  }
+
+  if (state.score > state.best) {
+    state.best = Math.floor(state.score);
+    localStorage.setItem("neonSprintBest", String(state.best));
+  }
+
+  speedEl.textContent = state.speed.toFixed(1);
+  scoreEl.textContent = Math.floor(state.score);
+  bestEl.textContent = state.best;
+  ammoEl.textContent = state.ammo;
+  modeLabelEl.textContent = modeConfig[state.mode].label + (modeConfig[state.mode].timed ? ` ${state.timeLeft.toFixed(0)}s` : "");
+}
+
+function render() {
+  drawRoad();
+
+  for (const bonus of state.bonuses) {
+    ctx.fillStyle = bonus.type === "score" ? "#ffd84d" : "#7de1ff";
+    ctx.beginPath();
+    ctx.arc(bonus.x, bonus.y, bonus.radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#091222";
+    ctx.font = "700 11px system-ui";
+    ctx.textAlign = "center";
+    ctx.fillText(bonus.type === "score" ? "+" : "A", bonus.x, bonus.y + 4);
+  }
+
+  for (const trafficCar of state.traffic) {
+    drawCar(trafficCar, trafficCar.color, trafficCar.armored ? "#2e3342" : "#111827");
+    if (trafficCar.armored) {
+      ctx.strokeStyle = "#b8c0d9";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(trafficCar.x + 2, trafficCar.y + 2, trafficCar.width - 4, trafficCar.height - 4);
+    }
+  }
+
+  ctx.fillStyle = "#ff7e33";
+  for (const bullet of state.bullets) {
+    ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+  }
+
+  const theme = carThemes[state.player.carType];
+  drawCar(state.player, theme.color, theme.accent);
+
+  if (state.gameOver) {
+    ctx.fillStyle = "rgb(0 0 0 / 66%)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#ff4d6d";
+    ctx.font = "700 46px system-ui";
+    ctx.textAlign = "center";
+    ctx.fillText("RACE OVER", canvas.width / 2, canvas.height / 2 - 20);
+    ctx.fillStyle = "#f6f7fb";
+    ctx.font = "600 20px system-ui";
+    ctx.fillText(`Final Score: ${Math.floor(state.score)}`, canvas.width / 2, canvas.height / 2 + 18);
+  }
+}
+
+function tick() {
+  update();
+  render();
+  requestAnimationFrame(tick);
+}
+
+function resetGame() {
+  state.player.x = ROAD_WIDTH / 2 - 24;
+  state.player.carType = carSelectEl.value;
+  state.mode = modeSelectEl.value;
+  state.difficulty = difficultySelectEl.value;
+  state.traffic = [];
+  state.bullets = [];
+  state.bonuses = [];
+  state.speed = 6;
+  state.score = 0;
+  state.spawnTimer = 0;
+  state.bonusTimer = 0;
+  state.ammo = 8;
+  state.timeLeft = 60;
+  state.gameOver = false;
+  modeLabelEl.textContent = modeConfig[state.mode].label;
+}
+
+function handleKey(isDown, event) {
+  if (event.code in keys) {
+    event.preventDefault();
+    keys[event.code] = isDown;
+  }
+
+  if (isDown && event.code === "Space") {
+    event.preventDefault();
+    shoot();
+  }
+}
+
+window.addEventListener("keydown", (event) => handleKey(true, event));
+window.addEventListener("keyup", (event) => handleKey(false, event));
+
+restartBtn.addEventListener("click", resetGame);
+startBtn.addEventListener("click", () => {
+  resetGame();
+  beep(520, 0.05, "triangle", 0.04);
+});
+
+bestEl.textContent = state.best;
+resetGame();
+tick();
+
+</script>
+  </body>
+</html>
