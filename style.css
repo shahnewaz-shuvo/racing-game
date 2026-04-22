@@ -50,9 +50,10 @@ header p {
 canvas {
   width: 100%;
   max-height: 72vh;
-  border: 2px solid #26324b;
+  border: 2px solid #1d3a5a;
   border-radius: 0.75rem;
   background: var(--road);
+  box-shadow: 0 0 24px rgba(0, 200, 255, 0.12), 0 8px 32px rgba(0,0,0,0.4);
 }
 
 .controls {
@@ -78,8 +79,15 @@ button {
   font-weight: 700;
   padding: 0.55rem 1rem;
   cursor: pointer;
+  box-shadow: 0 0 16px rgba(0, 213, 255, 0.35);
+  transition: filter 0.15s, box-shadow 0.15s;
 }
 
 button:hover {
-  filter: brightness(1.1);
+  filter: brightness(1.12);
+  box-shadow: 0 0 26px rgba(0, 213, 255, 0.55);
+}
+
+.hud strong {
+  color: var(--accent);
 }
